@@ -1,109 +1,205 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { Card } from "react-native-paper";
+import axios, { AxiosError } from "axios";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+const JadwalScreen = () => {
+  const [guru, setGuru] = useState<string | null>(null);
+  const [guruList, setGuruList] = useState<{ id: string; nama: string }[]>([]);
+  const [groupedJadwal, setGroupedJadwal] = useState<
+    {
+      [key: string]: {
+        day_of_week: string;
+        class_name: string;
+        start_time: string;
+        end_time: string;
+      }[];
+    }
+  >({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const token = "Sman1margaasih*";
 
-export default function TabTwoScreen() {
+  useEffect(() => {
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+    axios
+      .get(`https://blog.test/api/teachers`, { headers })
+      .then((response) => {
+        setGuruList(response.data.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (guru) {
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+      axios
+        .get(`https://blog.test/api/teacher/${guru}`, { headers })
+        .then((response) => {
+          const groupedJadwal = response.data.data.reduce(
+            (
+              acc: {
+                [key: string]: {
+                  day_of_week: string;
+                  class_name: string;
+                  start_time: string;
+                  end_time: string;
+                }[];
+              },
+              current: {
+                day_of_week: string;
+                class_name: string;
+                start_time: string;
+                end_time: string;
+              }
+            ) => {
+              const day = current.day_of_week;
+              if (!acc[day]) {
+                acc[day] = [];
+              }
+              acc[day].push(current);
+              return acc;
+            },
+            {} as {
+              [key: string]: {
+                day_of_week: string;
+                class_name: string;
+                start_time: string;
+                end_time: string;
+              }[];
+            }
+          );
+          setGroupedJadwal(groupedJadwal);
+          setErrorMessage(null);
+        })
+        .catch((error: AxiosError) => {
+          if (error.response?.status === 404) {
+            setErrorMessage("Guru belum memiliki jadwal");
+          } else {
+            console.error(error);
+          }
+        });
+    } else {
+      setGroupedJadwal({});
+      setErrorMessage(null);
+    }
+  }, [guru]);
+
+  const formatTimeTo12Hour = (time: string) => {
+    const [hour, minute] = time.split(":");
+    const hourNumber = parseInt(hour, 10);
+    const period = hourNumber >= 12 ? "PM" : "AM";
+    const formattedHour = hourNumber % 12 || 12;
+    return `${formattedHour}:${minute} ${period}`;
+  };
+
+  const days = {
+    monday: "Senin",
+    tuesday: "Selasa",
+    wednesday: "Rabu",
+    thursday: "Kamis",
+    friday: "Jumat",
+    saturday: "Sabtu",
+    sunday: "Minggu",
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.title}>Jadwal Guru</Text>
+      <Picker
+        selectedValue={guru}
+        onValueChange={(itemValue) => setGuru(itemValue as string | null)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Pilih Guru" value={null} />
+        {guruList &&
+          guruList.map((item, index) => (
+            <Picker.Item key={index} label={item.nama} value={item.id} />
+          ))}
+      </Picker>
+      {errorMessage ? (
+        <Text style={styles.noData}>{errorMessage}</Text>
+      ) : (
+        <ScrollView>
+          {Object.keys(groupedJadwal).length > 0 &&
+            Object.keys(groupedJadwal).map((day, index) => (
+              <Card key={index} style={styles.card}>
+                <View style={styles.dayTitleContainer}>
+                  <Text style={styles.dayTitle}>
+                    Hari: {days[day as keyof typeof days]}
+                  </Text>
+                </View>
+                {groupedJadwal[day].map((item, idx) => (
+                  <View key={idx} style={styles.jadwalItem}>
+                    <Text style={styles.text}>
+                      Waktu: {formatTimeTo12Hour(item.start_time)} -{" "}
+                      {formatTimeTo12Hour(item.end_time)}
+                    </Text>
+                    <Text style={styles.text}>
+                      Nama Kelas: {item.class_name}
+                    </Text>
+                  </View>
+                ))}
+              </Card>
+            ))}
+        </ScrollView>
+      )}
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: "#121212", // Dark theme background
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+    color: "#ffffff", // Dark theme text color
+  },
+  picker: {
+    marginBottom: 10,
+    color: "#ffffff", // Dark theme text color for picker
+    backgroundColor: "#1e1e1e", // Dark theme background for picker
+  },
+  card: {
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: "#1e1e1e", // Dark theme card background
+  },
+  dayTitleContainer: {
+    backgroundColor: "#007bff", // Blue background for header
+    borderRadius: 5,
+    padding: 5,
+  },
+  dayTitle: {
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#ffffff", // Dark theme text color
+  },
+  jadwalItem: {
+    marginBottom: 10,
+  },
+  text: {
+    color: "#ffffff", // Dark theme text color
+  },
+  noData: {
+    textAlign: "center",
+    color: "#ffffff", // Dark theme text color
+    marginTop: 10,
   },
 });
+
+export default JadwalScreen;
+
