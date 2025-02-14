@@ -25,7 +25,7 @@ const JadwalScreen = () => {
       Authorization: `Bearer ${token}`,
     };
     axios
-      .get(`https://blog.test/api/teachers`, { headers })
+      .get(`http://192.168.0.4:8000/api/teachers`, { headers })
       .then((response) => {
         setGuruList(response.data.data);
       })
@@ -40,7 +40,7 @@ const JadwalScreen = () => {
         Authorization: `Bearer ${token}`,
       };
       axios
-        .get(`https://blog.test/api/teacher/${guru}`, { headers })
+        .get(`http://192.168.0.4:8000/api/teacher/${guru}`, { headers })
         .then((response) => {
           const groupedJadwal = response.data.data.reduce(
             (

@@ -29,7 +29,7 @@ const JadwalScreen = () => {
       Authorization: `Bearer ${token}`,
     };
     axios
-      .get(`https://blog.test/api/classroom`, { headers })
+      .get(`http://192.168.0.4:8000/api/classroom`, { headers })
       .then((response) => {
         setKelasList(response.data);
       })
@@ -45,7 +45,7 @@ const JadwalScreen = () => {
         Authorization: `Bearer ${token}`,
       };
       axios
-        .get(`https://blog.test/api/schedules/${kelas}`, { headers })
+        .get(`http://192.168.0.4:8000/api/schedules/${kelas}`, { headers })
         .then((response) => {
           setJadwal(response.data.data);
         })
